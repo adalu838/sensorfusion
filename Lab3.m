@@ -75,14 +75,16 @@ for sample = 1
     end
     
     % Calculate V
-    for x_ = 1:100
-        for y_ = 1:150
+    for x_ = 1:150
+        for y_ = 1:100
             d = y - h_tdoa(0,[x_ y_]', 0, sensors.th);
             V(y_,x_) = d'*inv(diag(variance2))*d;
         end
     end
     figure;
     contour(V);
+    hold on;
+    plot(sensors, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14])
 end
 
 %% Bad configuration
@@ -97,7 +99,7 @@ sensors.th = [0; 97;
               bias(1);bias(2);bias(3);bias(4);bias(5);bias(6);bias(7);
               34385]';
 %% 
-for sample = 1:1:80
+for sample = 1:2:20
     % Calculate y
     k = 1;
     for i = 1:7
@@ -110,19 +112,20 @@ for sample = 1:1:80
     % Calculate V
     for x_ = 1:150
         for y_ = 1:100
-            d = y - h_tdoa(0,[x_ y_]', 0, sensors.th);
+            d = y - h_tdoa(0,[x_ y_]', 0, sensors.th)
             V(y_,x_) = d'*inv(diag(variance2))*d;
         end
     end
     figure;
-    contour(V)
+    contour(V);
     hold on;
+    plot(sensors, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14]);
 end
     
 %% 5. Localisation: Gauss-Newton
 %Calculate measurement y
 traj = [];
-for sample = 1:1:80
+for sample = 1:1:89
 k = 1;
 for i = 1:7
     for j = (i+1):7
@@ -140,7 +143,9 @@ plot_values = [x_hat0];
 r = 1;
 while r < 100
     
-    x_hat = x_hat0 + alpha*inv((grad_h(x_hat0,sensors.th))'*inv(diag(variance2))*grad_h(x_hat0,sensors.th))*(grad_h(x_hat0,sensors.th))'*inv(diag(variance2))*(y - h_tdoa(0, x_hat0, 0, sensors.th));
+    x_hat = x_hat0 + alpha*inv((grad_h(x_hat0,sensors.th))'*inv(diag(variance2))*grad_h(x_hat0,sensors.th))...
+            *(grad_h(x_hat0,sensors.th))'*inv(diag(variance2))...
+            *(y - h_tdoa(0, x_hat0, 0, sensors.th));
     
     % Calculate V
     d = y - h_tdoa(0,x_hat, 0, sensors.th);
@@ -171,4 +176,39 @@ traj = [traj x_hat];
 
 end
 
-plot(traj(1,:),traj(2,:), 'o');
+plot(traj(1,:),traj(2,:), 'ok');
+hold on;
+plot(sensors, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14])
+clc;
+
+
+%% 6. Tracking: Two motion models, EKF.
+T = 0.5;
+
+%ydata = traj';
+
+% Constant velocity model
+cvmodel = exlti('cv2d');
+cvnl = nl(cvmodel);
+
+yv = sig(ydata,1/T);
+xhatv = ekf(cvnl,yv, 'R', 100*eye(4));
+xcrlbv = crlb(cvnl,yv);
+
+figure;
+xplot2(xhatv,'conf',90);
+
+%% Constant acceleration model
+camodel = exlti('ca2d');
+canl = nl(camodel);
+
+ya = simulate(camodel,10);
+xhata = ekf(canl,ya);
+xcrlba = crlb(cvnl,ya);
+
+figure;
+xplot2(xcrlba, xhata,'conf',90);
+
+
+
+
