@@ -1,7 +1,10 @@
 clear all;
 close all;
 %initcourse TSRT14;
-load good
+addpath Z:\sigsys\classes\
+addpath Z:\sigsys\data\
+addpath Z:\sigsys\mfiles\
+load tphat_calibrate
 %% 1. 
 
 m = mean(tphat, 2);
@@ -58,26 +61,61 @@ plot(sensors, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14])
 
 % a) for TDOA measurements using pairwise differences
 % Calculate NLS loss function in a grid
-
-% Bad configuration 
-
-% Calculate y
-sample = 24;
-k = 1;
-for i = 1:7
-    for j = (i+1):7
-        y(k,1) = tphat(sample,i)-tphat(sample,j);
-        k = k+1;
+%% Good configuration 
+load tphat_good
+%% 
+for sample = 1:5:80
+    % Calculate y
+    k = 1;
+    for i = 1:7
+        for j = (i+1):7
+            y(k,1) = tphat(sample,i)-tphat(sample,j);
+            k = k+1;
+        end
     end
-end
-y
-
-for x_ = 1:100
-    for y_ = 1:150
-        d = y - h_tdoa(0,[x_ y_]', 0, sensors.th);
-        V(y_,x_) = d'*inv(diag(variance2))*d;
+    
+    % Calculate V
+    for x_ = 1:100
+        for y_ = 1:150
+            d = y - h_tdoa(0,[x_ y_]', 0, sensors.th);
+            V(y_,x_) = d'*inv(diag(variance2))*d;
+        end
     end
+    figure;
+    surface(V)
 end
 
-figure;clf;
-surface(V)
+%% Bad configuration
+load tphat_bad
+sensors.th = [0; 97; 
+              0; 85;
+              0; 74;
+              0; 56;
+              0; 34;
+              0; 17;
+              0; 0;
+              bias(1);bias(2);bias(3);bias(4);bias(5);bias(6);bias(7);
+              34385]';
+%% 
+for sample = 1:5:80
+    % Calculate y
+    k = 1;
+    for i = 1:7
+        for j = (i+1):7
+            y(k,1) = tphat(sample,i)-tphat(sample,j);
+            k = k+1;
+        end
+    end
+    
+    % Calculate V
+    for x_ = 1:100
+        for y_ = 1:150
+            d = y - h_tdoa(0,[x_ y_]', 0, sensors.th);
+            V(y_,x_) = d'*inv(diag(variance2))*d;
+        end
+    end
+    figure;
+    surface(V)
+end
+
+%% 
