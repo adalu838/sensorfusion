@@ -180,12 +180,34 @@ traj = [traj x_hat];
 % figure;
 % plot(plot_values(1,:),plot_values(2,:), 'ko-');
 
-end
-
 plot(traj(1,:),traj(2,:), 'ok');
 hold on;
 plot(sensors, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14])
 clc;
+
+%% 5. Localization: TDOA approach, Range parameter trilateration
+sample = 10;
+sensors = sensors_good;
+
+A = zeros(21,2);
+b = zeros(21,1);
+
+k = 1;
+for m = 1:7
+    for j = (i+1):7
+        
+        t_m0 = (tphat(sample,m)-tphat(sample,0))^2;
+        t_j0 = (tphat(sample,j)-tphat(sample,0))^2;
+        
+        A(k,1) = 2*sensors(m,1)/(v*t_m0) - 2*sensors(j,1)/(v*t_j0);
+        A(k,2) = 2*sensors(m,2)/(v*t_m0) - 2*sensors(j,2)/(v*t_j0);
+        b(k) = - (v*t_m0 - v*t_j0 - (sensors(m,1)^2 + sensors(m,2)^2)/(v*t_m0) + (sensors(j,1)^2 + sensors(j,2)^2)/(v*t_j0));
+        
+        k = k+1;
+    end
+end
+
+x = A\b
 
 
 %% 6. Tracking: Two motion models, EKF.
@@ -214,30 +236,3 @@ xcrlba = crlb(cvnl,ya);
 
 figure;
 xplot2(xcrlba, xhata,'conf',90);
-
-
-
-
-%% Localization: TDOA approach, Range parameter trilateration
-sample = 10;
-sensors = sensors_good;
-
-A = zeros(21,2);
-b = zeros(21,1);
-
-k = 1;
-for m = 1:7
-    for j = (i+1):7
-        
-        t_m0 = (tphat(sample,m)-tphat(sample,0))^2;
-        t_j0 = (tphat(sample,j)-tphat(sample,0))^2;
-        
-        A(k,1) = 2*sensors(m,1)/(v*t_m0) - 2*sensors(j,1)/(v*t_j0);
-        A(k,2) = 2*sensors(m,2)/(v*t_m0) - 2*sensors(j,2)/(v*t_j0);
-        b(k) = - (v*t_m0 - v*t_j0 - (sensors(m,1)^2 + sensors(m,2)^2)/(v*t_m0) + (sensors(j,1)^2 + sensors(j,2)^2)/(v*t_j0));
-        
-        k = k+1;
-    end
-end
-
-x = A\b
