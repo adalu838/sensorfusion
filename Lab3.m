@@ -5,6 +5,24 @@ addpath sigsys/classes/
 addpath sigsys/data/
 addpath sigsys/mfiles/
 load tphat_calibrate
+
+% Velocity of sound:
+v = 34385;
+sensors_good =   [80 0; 
+                  122 36;
+                  100 99;
+                  35 99;
+                  0 72;
+                  0 30;
+                  30 0];
+sensors_bad =    [0 97; 
+                  0 85;
+                  0 74;
+                  0 56;
+                  0 34;
+                  0 17;
+                  0 0];
+
 clc;
 %% 1. 
 
@@ -55,13 +73,7 @@ sensors2.pe = pe2;
 %% Good configuration
 load tphat_good
 
-sensors1.th = [80; 0; 
-              122; 36;
-              100; 99;
-              35; 99;
-              0; 72;
-              0; 30;
-              30; 0;
+sensors1.th = [reshape(sensors_good',14,1);
               bias(1);bias(2);bias(3);bias(4);bias(5);bias(6);bias(7);
               34385]';
 % Plot
@@ -69,13 +81,7 @@ figure(2); clf;
 subplot(211);
 plot(sensors1, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14])
           
-sensors2.th = [80; 0; 
-              122; 36;
-              100; 99;
-              35; 99;
-              0; 72;
-              0; 30;
-              30; 0;
+sensors2.th = [reshape(sensors_good',14,1);
               bias(1);bias(2);bias(3);bias(4);bias(5);bias(6);bias(7);
               34385]';
 % Plot
@@ -86,13 +92,7 @@ plot(sensors2, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14])
 %% Bad configuration
 load tphat_bad
 
-sensors1.th = [0; 97; 
-              0; 85;
-              0; 74;
-              0; 56;
-              0; 34;
-              0; 17;
-              0; 0;
+sensors1.th = [reshape(sensors_bad',14,1);
               bias(1);bias(2);bias(3);bias(4);bias(5);bias(6);bias(7);
               34385]';
 % Plot
@@ -100,13 +100,7 @@ figure(2); clf;
 subplot(211);
 plot(sensors2, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14])
           
-sensors2.th = [0; 97; 
-              0; 85;
-              0; 74;
-              0; 56;
-              0; 34;
-              0; 17;
-              0; 0;
+sensors2.th = [reshape(sensors_bad',14,1);
               bias(1);bias(2);bias(3);bias(4);bias(5);bias(6);bias(7);
               34385]';
 % Plot
@@ -193,14 +187,16 @@ plot(x(:,1),x(:,2));
 sm = exsensor('tdoa2', 7, 1,2);
 sm.th = reshape(sensors_good',14,1);
 sm.x0 = [67 52]';
-sm.pe = pe/100;
+sm.pe = pe2;
+
+figure(7)
 
 for sample = 1:1:81
 
     k = 1;
     for i = 1:7
         for j = (i+1):7
-            y(k,1) = (tphat(sample,i)-tphat(sample,j))*34385;
+            y(k,1) = (tphat(sample,i)-tphat(sample,j))*v;
             k = k+1;
         end
     end
