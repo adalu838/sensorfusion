@@ -170,7 +170,7 @@ for sample = 20
     plot(sensors, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14]);
 end
 
-%% 5. Localisation: Gauss-Newton
+%% 5. b) Localisation: Gauss-Newton
 %Calculate measurement y
 x = [];
 sensors1.x0 = [67 52 0];
@@ -187,6 +187,31 @@ x = [x; xhat.x];
 end
 
 plot(x(:,1),x(:,2));
+
+%% 5. d) Localization: TDOA Differences to eliminate r0
+
+sm = exsensor('tdoa2', 7, 1,2);
+sm.th = reshape(sensors_good',14,1);
+sm.x0 = [67 52]';
+sm.pe = pe/100;
+
+for sample = 1:1:81
+
+    k = 1;
+    for i = 1:7
+        for j = (i+1):7
+            y(k,1) = (tphat(sample,i)-tphat(sample,j))*34385;
+            k = k+1;
+        end
+    end
+
+    y_sig = sig(y');
+    %y_sig = simulate(sm,1)
+    [xhat, shat] = wls(sm, y_sig);
+    %xhat = sig(shat)
+    xplot2(xhat)
+    hold on
+end
 
 %% 6. Tracking: Two motion models, EKF.
 T = 0.5;
