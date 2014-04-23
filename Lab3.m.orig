@@ -70,6 +70,7 @@ sensors2.P = zeros(22,22);
 sensors2.x0 = [67 52];
 sensors2.pe = pe2;
 
+<<<<<<< HEAD
 %% Good configuration
 load tphat_good
 
@@ -108,6 +109,8 @@ figure(2)
 subplot(212);
 plot(sensors2, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14])
           
+=======
+>>>>>>> 363e10446579847913abb7ed23628faed0ffb3a8
 %% 4. 
 % a) for TDOA measurements using pairwise differences
 % Calculate NLS loss function in a grid
@@ -185,7 +188,6 @@ end
 plot(x(:,1),x(:,2));
 
 %% 5. d) Localization: TDOA Differences to eliminate r0
-goodconf;
 
 sm = exsensor('tdoa2', 7, 1,2);
 sm.th = reshape(sensors_good',14,1);
