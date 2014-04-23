@@ -70,6 +70,7 @@ sensors2.P = zeros(22,22);
 sensors2.x0 = [67 52];
 sensors2.pe = pe2;
 
+<<<<<<< HEAD
 %% Good configuration
 load tphat_good
 
@@ -108,13 +109,13 @@ figure(2)
 subplot(212);
 plot(sensors2, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14])
           
+=======
+>>>>>>> 363e10446579847913abb7ed23628faed0ffb3a8
 %% 4. 
-
 % a) for TDOA measurements using pairwise differences
 % Calculate NLS loss function in a grid
 %% Good configuration 
-%load tphat_good
-% TDOA2
+goodconf;
 
 for sample = 1
     % Calculate y
@@ -133,15 +134,18 @@ for sample = 1
             V(y_,x_) = d'*inv(diag(variance2))*d;
         end
     end
-
+    
+    figure;
     subplot(2,1,1);
     contour(V);
     hold on;
     plot(sensors2, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14])
 end
 
-%% 
-for sample = 20
+% Bad configuration
+badconf; 
+
+for sample = 1
     % Calculate y
     k = 1;
     for i = 1:7
@@ -154,14 +158,15 @@ for sample = 20
     % Calculate V
     for x_ = 1:150
         for y_ = 1:100
-            d = y - h_tdoa(0,[x_ y_]', 0, sensors.th);
+            d = y - h_tdoa2(0,[x_ y_]', 0, sensors2.th);
             V(y_,x_) = d'*inv(diag(variance2))*d;
         end
     end
-    figure;
+    
+    subplot(2,1,2);
     contour(V);
     hold on;
-    plot(sensors, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14]);
+    plot(sensors2, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14]);
 end
 
 %% 5. b) Localisation: Gauss-Newton
