@@ -56,7 +56,7 @@ end
 pe = ndist(zeros(21,1), diag(variance2));
 
 % Createn SENSORMOD object
-sensors = sensormod('h_tdoa',[2 0 21 22]);
+sensors = sensormod(@h_tdoa,[2 0 21 22]);
 sensors.P = zeros(22,22);
 % Setup sensors
 sensors.th = [reshape(sensors_good',14,1);
