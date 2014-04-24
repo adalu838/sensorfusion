@@ -109,7 +109,7 @@ title('Sensor setup - Bad configuration');
 % Calculate NLS loss function in a grid
 %% Good configuration 
 goodconf;
-
+figure(3)
 for sample = 1
     % Calculate y
     k = 1;
@@ -128,7 +128,6 @@ for sample = 1
         end
     end
     
-    figure;
     subplot(2,1,1);
     contour(V);
     hold on;
@@ -171,26 +170,23 @@ end
 
 %% 5. b) Localization: Gauss-Newton
 %Calculate measurement y
+goodconf;
 x = [];
+
 y = 0;
 
+sensors1.x0 = [67 52 50];
+
 for sample = 1:88
-
-    %for i = 1:7
-        y = tphat(sample,:); % - bias(i);
-    %end
-
-    yv = sig(y);
-    [shat, res] = estimate(sensors1, yv, 'thmask', zeros(22,1), 'alg', 'gn');
+    y = tphat(sample,:); % - bias(i);
+    yv = sig(y,2);
+    [shat res] = estimate(sensors1,yv,'thmask', zeros(22,1), 'alg', 'gn');
     xhat = sig(shat);
-
-    xplot2(xhat)
-    hold on
     x = [x; xhat.x];
-
 end
 
-%plot(x(:,1),x(:,2));
+figure(4)
+plot(x(:,1),x(:,2), '*');
 
 %% 5. d) Localization: TDOA Differences to eliminate r0
 goodconf;
@@ -201,6 +197,8 @@ sm.x0 = [67 52]';
 sm.pe = pe2;
 
 figure(7)
+
+x = [0 0];
 
 for sample = 1:1:81
 
@@ -218,6 +216,8 @@ for sample = 1:1:81
     %xhat = sig(shat)
     xplot2(xhat)
     hold on
+    
+    x(sample, :) = xhat.x;
 end
 
 %% 6. Tracking: Two motion models, EKF.
@@ -227,39 +227,81 @@ ydata = x;
 
 % Constant velocity model
 cvmodel = exlti('cv2d');
-cvmodel.R = 20*cvmodel.R;
+cvmodel.R = 400*cvmodel.R;
 cvnl = nl(cvmodel);
 
 yv = sig(ydata,1/T);
-xhatv = ekf(cvnl,yv,'R',6);
+xhatv = ekf(cvnl,yv,'R',8);
 
-figure;
+figure(8)
 xplot2(xhatv,'conf',90);
 hold on;
 plot(ydata(:,1),ydata(:,2),'*r')
 
-%% Constant acceleration model
-camodel = exlti('ca2d');
-camodel.R = 20*camodel.R;
-canl = nl(camodel);
+%% Coordinated turn model
 
-ya = sig(ydata,1/T);
-xhata = ekf(canl,ya);
+mm2 = exmotion('ctcv2d');
+mm2.x0 = [0.67; 0.52; 0.05; 0; 0];
 
-figure;
+sm1 = exsensor('gps2d');
+mm2 = addsensor(mm2, sm1);
+mm2.px0 = 0.01*diag([1 1 1 1 1]);
+mm2.pe = ndist([0 0]', 0.003*eye(2));
+
+y = x/100;
+
+xhata = ekf(mm2,sig(y, 2));
+
+figure(9)
+clf
 xplot2(xhata,'conf',90);
 hold on;
-plot(ydata(:,1),ydata(:,2),'*r')
+plot(x(:,1),x(:,2),'*r')
+
+%% 6. b)
+
+% Create SENSORMOD object with tdoa2
+sensors2 = sensormod('h_tdoa2_simple',[2 0 6 22]);
+sensors2.P = zeros(22,22);
+sensors2.x0 = [67 52];
 
 %% 6. b) Particle filter
 
-% Constant velocity model
-sm = exsensor('tdoa2', 7, 1, 2);
-sm.th = reshape(sensors_good',14,1);
-sm.x0 = [67 52]';
-sm.pe = pe2;
+% Calculate pe for tdoa differences
+i = 1;
+variance2 = zeros(1,6);
+for j = (i+1):7
+    variance2(j-1) = variance(i) + variance(j);
+end
+sensors2.pe = ndist(zeros(6,1), diag(variance2));
 
-zhat = pf(sm, 
+goodconf;
 
+x = [0 0];
+y = [];
+clf;
+figure(8)
+for sample = 1:1:80
+    k = 1;
+    i = 1;
+    for j = (i+1):7
+        y(k) = (tphat(sample,i)-tphat(sample,j));
+        k = k+1;
+    end
 
+    y_sig = sig(y);
+    [xhat, shat] = wls(sensors2, y_sig);
+    xplot2(xhat)
+    hold on
+    
+    x(sample, :) = xhat.x;
+end
 
+% Use particle filter
+cvmodel = exlti('cv2d');
+%cvmodel.R = 30*cvmodel.R;
+cvnl = nl(cvmodel);
+
+zhat = pf(cvnl, sig(x), 'Np', 50000);
+figure(9)
+xplot2(zhat);
