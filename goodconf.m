@@ -1,5 +1,6 @@
 % Good configuration
 load tphat_good
+tphat(1:88,:) = tphat(2:89,:);
 
 sensors1.th = [80; 0; 
               122; 36;

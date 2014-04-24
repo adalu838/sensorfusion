@@ -1,7 +1,6 @@
-% h(t,x(t),u(t);th)
-%  x: The position of the unknown object: [x y]
-%  u: ??
-%  th: input [x1 y1 bias1 x2 y2 bias2 ... x7 y7 bias7 v] 
+% h(t,x,u;th)
+%  x: The position of the unknown object: [x y t0]
+%  th: input [x1 y1 x2 y2 ... bias1 bias2 ... v] 
 
 function h = h_tdoa2( t, x, u, th )
     count = 1;
