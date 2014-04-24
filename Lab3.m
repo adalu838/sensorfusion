@@ -223,13 +223,14 @@ ydata = x;
 
 % Constant velocity model
 cvmodel = exlti('cv2d');
-cvmodel.R = 30*cvmodel.R;
+cvmodel.R = 400*cvmodel.R;
 cvnl = nl(cvmodel);
+cvnl.px0 =
 
 yv = sig(ydata,1/T);
 xhatv = ekf(cvnl,yv,'R',8);
 
-figure;
+figure(8)
 xplot2(xhatv,'conf',90);
 hold on;
 plot(ydata(:,1),ydata(:,2),'*r')
@@ -237,18 +238,19 @@ plot(ydata(:,1),ydata(:,2),'*r')
 %% Coordinated turn model
 
 mm2 = exmotion('ctcv2d');
-mm2.x0 = [50; 50; -5; 0; 0];
+mm2.x0 = [0.67; 0.52; 0.05; 0; 0];
 
 sm1 = exsensor('gps2d');
 mm2 = addsensor(mm2, sm1);
-mm2.px0 = 100*diag([0.001 0.001 0.01 0.01 0.01]);
-mm2.pe = ndist([0 0]', 40*eye(2));
+mm2.px0 = 0.01*diag([1 1 1 1 1]);
+mm2.pe = ndist([0 0]', 0.003*eye(2));
 
-y = x;
+y = x/100;
 
 xhata = ekf(mm2,sig(y, 2));
 
-figure;
+figure(9)
+clf
 xplot2(xhata,'conf',90);
 hold on;
 plot(x(:,1),x(:,2),'*r')
@@ -281,12 +283,6 @@ for sample = 1:1:80
         y(k) = (tphat(sample,i)-tphat(sample,j));
         k = k+1;
     end
-%     for i = 1:7
-%         for j = (i+1):7
-%             y(k,1) = (tphat(sample,i)-tphat(sample,j));
-%             k = k+1;
-%         end
-%     end
 
     y_sig = sig(y);
     [xhat, shat] = wls(sensors2, y_sig);
