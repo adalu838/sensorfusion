@@ -43,7 +43,7 @@ for i = 1:7
     pe = ndist(bias(i), variance(i));
     plot(pe)
 end
- 
+%pdf_print('calibration')
 %% 2. & 3.
 
 % Calculate pe for all tdoa differences
@@ -71,43 +71,39 @@ sensors2.x0 = [67 52];
 sensors2.pe = pe2;
 
 %% Good configuration
-load tphat_good
+goodconf;
 
-sensors1.th = [reshape(sensors_good',14,1);
-              bias(1);bias(2);bias(3);bias(4);bias(5);bias(6);bias(7);
-              34385]';
 % Plot
 figure(2); clf;
-subplot(211);
+%subplot(211);
 plot(sensors1, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14])
-          
-sensors2.th = [reshape(sensors_good',14,1);
-              bias(1);bias(2);bias(3);bias(4);bias(5);bias(6);bias(7);
-              34385]';
+axis([-2 125 -2 100]);
+xlabel('x [cm]');
+ylabel('y [cm]');
+title('Sensor setup - Good configuration');
+
 % Plot
-figure(2)
-subplot(212);
-plot(sensors2, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14])
+% figure(2)
+% subplot(212);
+% plot(sensors2, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14])
 
 %% Bad configuration
-load tphat_bad
+badconf;
 
-sensors1.th = [reshape(sensors_bad',14,1);
-              bias(1);bias(2);bias(3);bias(4);bias(5);bias(6);bias(7);
-              34385]';
 % Plot
-figure(2); clf;
-subplot(211);
-plot(sensors2, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14])
-          
-sensors2.th = [reshape(sensors_bad',14,1);
-              bias(1);bias(2);bias(3);bias(4);bias(5);bias(6);bias(7);
-              34385]';
+figure(3); clf;
+%subplot(211);
+plot(sensors1, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14])
+axis([-2 125 -2 100]);
+xlabel('x [cm]');
+ylabel('y [cm]');
+title('Sensor setup - Bad configuration');
+
 % Plot
-figure(2)
-subplot(212);
-plot(sensors2, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14])
-          
+% figure(2)
+% subplot(212);
+% plot(sensors2, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14])
+%pdf_print('badconf')
 %% 4. 
 % a) for TDOA measurements using pairwise differences
 % Calculate NLS loss function in a grid
@@ -137,6 +133,10 @@ for sample = 1
     contour(V);
     hold on;
     plot(sensors2, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14])
+    axis([-2 125 -2 100]);
+    xlabel('x [cm]');
+    ylabel('y [cm]');
+    title('NLS loss function for two sensor configurations')
 end
 
 % Bad configuration
@@ -164,30 +164,38 @@ for sample = 1
     contour(V);
     hold on;
     plot(sensors2, 'thind', [1 2 3 4 5 6 7 8 9 10 11 12 13 14]);
+    axis([-2 125 -2 100]);
+    xlabel('x [cm]');
+    ylabel('y [cm]');
 end
 
-%% 5. b) Localisation: Gauss-Newton
+%% 5. b) Localization: Gauss-Newton
 %Calculate measurement y
 x = [];
-sensors1.x0 = [67 52 0];
-for sample = 1:89
+y = 0;
 
-for i = 1:7
-    y(i,1) = tphat(sample,i) - bias(i);
+for sample = 1:88
+
+    %for i = 1:7
+        y = tphat(sample,:); % - bias(i);
+    %end
+
+    yv = sig(y);
+    [shat, res] = estimate(sensors1, yv, 'thmask', zeros(22,1), 'alg', 'gn');
+    xhat = sig(shat);
+
+    xplot2(xhat)
+    hold on
+    x = [x; xhat.x];
+
 end
 
-yv = sig(y',2);
-[shat res] = estimate(sensors1,yv,'thmask', zeros(22,1));
-xhat = sig(shat);
-x = [x; xhat.x];
-end
-
-plot(x(:,1),x(:,2));
+%plot(x(:,1),x(:,2));
 
 %% 5. d) Localization: TDOA Differences to eliminate r0
 goodconf;
 
-sm = exsensor('tdoa2', 7, 1,2);
+sm = exsensor('tdoa2', 7, 1, 2);
 sm.th = reshape(sensors_good',14,1);
 sm.x0 = [67 52]';
 sm.pe = pe2;
@@ -243,6 +251,15 @@ xplot2(xhata,'conf',90);
 hold on;
 plot(ydata(:,1),ydata(:,2),'*r')
 
+%% 6. b) Particle filter
+
+% Constant velocity model
+sm = exsensor('tdoa2', 7, 1, 2);
+sm.th = reshape(sensors_good',14,1);
+sm.x0 = [67 52]';
+sm.pe = pe2;
+
+zhat = pf(sm, 
 
 
 
